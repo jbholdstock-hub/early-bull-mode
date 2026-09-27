@@ -139,6 +139,29 @@
       </div>
     </section>
 
+    <!-- NEW: Sector & Industry Relative Strength Leaderboard Panel -->
+    <section class="bg-terminal-850 border border-slate-800 rounded-xl p-4 lg:p-5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+        <div>
+          <h2 class="text-sm font-semibold text-white flex items-center gap-2">
+            <i data-lucide="activity" class="w-4 h-4 text-amber-400"></i>
+            Sector &amp; Industry Relative Strength (RS) Rotation
+          </h2>
+          <p class="text-xs text-slate-400">Ranked by 3-Month Performance &amp; Institutional Inflow. Click any sector to filter stocks below.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-[11px] text-slate-400">Active Filter:</span>
+          <span id="active-sector-badge" class="text-xs font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">All Sectors</span>
+          <button id="btn-reset-sector" class="text-[11px] text-slate-400 hover:text-white underline hidden">Clear</button>
+        </div>
+      </div>
+
+      <!-- Sector ranking grid / cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 pt-3" id="sector-rankings-container">
+        <!-- Injected via JavaScript -->
+      </div>
+    </section>
+
     <!-- Interactive Filter & Scanner Configuration -->
     <section class="bg-terminal-850 border border-slate-800 rounded-xl p-4 lg:p-5">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
@@ -210,13 +233,17 @@
           <label for="filter-sector" class="block text-xs font-medium text-slate-300">Sector Focus</label>
           <select id="filter-sector" class="w-full bg-terminal-900 border border-slate-700 rounded-lg text-xs px-2.5 py-1.5 text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500">
             <option value="ALL">All Sectors</option>
-            <option value="Technology">Technology</option>
-            <option value="Energy">Energy</option>
-            <option value="Financials">Financials</option>
-            <option value="Healthcare">Healthcare</option>
-            <option value="Industrials">Industrials</option>
-            <option value="Communication">Communication</option>
-            <option value="Consumer Discretionary">Consumer Discretionary</option>
+            <option value="Technology">Technology (XLK)</option>
+            <option value="Energy">Energy (XLE)</option>
+            <option value="Communication">Communication (XLC)</option>
+            <option value="Industrials">Industrials (XLI)</option>
+            <option value="Financials">Financials (XLF)</option>
+            <option value="Consumer Discretionary">Consumer Discretionary (XLY)</option>
+            <option value="Healthcare">Healthcare (XLV)</option>
+            <option value="Materials">Materials (XLB)</option>
+            <option value="Consumer Staples">Consumer Staples (XLP)</option>
+            <option value="Utilities">Utilities (XLU)</option>
+            <option value="Real Estate">Real Estate (XLRE)</option>
           </select>
         </div>
       </div>
@@ -395,6 +422,24 @@
 
   <script>
     /* -------------------------------------------------------------
+       SECTOR RELATIVE STRENGTH ROTATION DATA
+       Ranked by 3-Month Performance & Stage Dynamics
+       ------------------------------------------------------------- */
+    const SECTOR_DATA = [
+      { name: 'Technology', ticker: 'XLK', perf3M: 14.8, rsRating: 94, phase: 'LEADING', badgeClass: 'bg-emerald-950/80 text-emerald-400 border-emerald-800' },
+      { name: 'Energy', ticker: 'XLE', perf3M: 11.2, rsRating: 88, phase: 'LEADING', badgeClass: 'bg-emerald-950/80 text-emerald-400 border-emerald-800' },
+      { name: 'Communication', ticker: 'XLC', perf3M: 8.9, rsRating: 82, phase: 'IMPROVING', badgeClass: 'bg-cyan-950/80 text-cyan-400 border-cyan-800' },
+      { name: 'Industrials', ticker: 'XLI', perf3M: 6.4, rsRating: 76, phase: 'IMPROVING', badgeClass: 'bg-cyan-950/80 text-cyan-400 border-cyan-800' },
+      { name: 'Financials', ticker: 'XLF', perf3M: 4.8, rsRating: 71, phase: 'IMPROVING', badgeClass: 'bg-cyan-950/80 text-cyan-400 border-cyan-800' },
+      { name: 'Consumer Discretionary', ticker: 'XLY', perf3M: 3.1, rsRating: 65, phase: 'WEAKENING', badgeClass: 'bg-amber-950/80 text-amber-300 border-amber-800' },
+      { name: 'Materials', ticker: 'XLB', perf3M: 1.2, rsRating: 54, phase: 'WEAKENING', badgeClass: 'bg-amber-950/80 text-amber-300 border-amber-800' },
+      { name: 'Healthcare', ticker: 'XLV', perf3M: -0.8, rsRating: 46, phase: 'LAGGING', badgeClass: 'bg-rose-950/80 text-rose-400 border-rose-800' },
+      { name: 'Consumer Staples', ticker: 'XLP', perf3M: -1.9, rsRating: 39, phase: 'LAGGING', badgeClass: 'bg-rose-950/80 text-rose-400 border-rose-800' },
+      { name: 'Utilities', ticker: 'XLU', perf3M: -3.2, rsRating: 32, phase: 'LAGGING', badgeClass: 'bg-rose-950/80 text-rose-400 border-rose-800' },
+      { name: 'Real Estate', ticker: 'XLRE', perf3M: -4.5, rsRating: 25, phase: 'LAGGING', badgeClass: 'bg-rose-950/80 text-rose-400 border-rose-800' }
+    ];
+
+    /* -------------------------------------------------------------
        MARKET UNIVERSE & QUANTITATIVE DATA ENGINE
        Calculates 50 MA, 200 MA, Crossover Delays, and % Distances
        ------------------------------------------------------------- */
@@ -438,10 +483,94 @@
     const btnCloseModal2 = document.getElementById('btn-close-modal-2');
     const btnExportCSV = document.getElementById('btn-export-csv');
 
+    // Sector leaderboard DOM elements
+    const sectorRankingsContainer = document.getElementById('sector-rankings-container');
+    const activeSectorBadge = document.getElementById('active-sector-badge');
+    const btnResetSector = document.getElementById('btn-reset-sector');
+
     // Stats elements
     const statBullCount = document.getElementById('stat-bull-count');
     const statTotalPool = document.getElementById('stat-total-pool');
     const statDaysLabel = document.getElementById('stat-days-label');
+    const statTopSector = document.getElementById('stat-top-sector');
+    const statSectorStatus = document.getElementById('stat-sector-status');
+
+    /**
+     * Renders the interactive Sector Relative Strength ranking board
+     */
+    function renderSectorLeaderboard() {
+      sectorRankingsContainer.innerHTML = '';
+      const currentSelectedSector = filterSectorSelect.value;
+
+      // Update top banner
+      if (SECTOR_DATA.length > 0) {
+        statTopSector.textContent = `${SECTOR_DATA[0].name} (${SECTOR_DATA[0].ticker})`;
+        statSectorStatus.textContent = `+${SECTOR_DATA[0].perf3M.toFixed(1)}% (Rank #1)`;
+      }
+
+      SECTOR_DATA.forEach((sec, idx) => {
+        const isSelected = (currentSelectedSector === sec.name);
+        const card = document.createElement('div');
+        card.className = `p-2.5 rounded-lg border cursor-pointer transition flex flex-col justify-between ${
+          isSelected 
+            ? 'bg-slate-800 border-cyan-500 shadow-md ring-1 ring-cyan-500' 
+            : 'bg-terminal-900 border-slate-800 hover:border-slate-700 hover:bg-slate-800/40'
+        }`;
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-mono text-[10px] text-slate-500 font-bold">#${idx + 1}</span>
+            <span class="text-[9px] px-1.5 py-0.2 rounded font-mono border ${sec.badgeClass}">
+              ${sec.phase}
+            </span>
+          </div>
+          <div class="my-1.5">
+            <div class="text-xs font-bold text-slate-200 truncate flex items-center justify-between">
+              <span>${sec.name}</span>
+              <span class="text-[10px] font-mono text-slate-400">${sec.ticker}</span>
+            </div>
+            <div class="flex items-baseline justify-between mt-0.5">
+              <span class="text-[10px] text-slate-400">RS: <strong class="text-slate-200 font-mono">${sec.rsRating}</strong></span>
+              <span class="text-xs font-mono font-semibold ${sec.perf3M >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                ${sec.perf3M >= 0 ? '+' : ''}${sec.perf3M.toFixed(1)}%
+              </span>
+            </div>
+          </div>
+          <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden mt-1">
+            <div class="h-full ${sec.perf3M >= 0 ? 'bg-emerald-500' : 'bg-rose-500'}" style="width: ${Math.min(Math.max((sec.rsRating), 5), 100)}%"></div>
+          </div>
+        `;
+
+        card.addEventListener('click', () => {
+          if (filterSectorSelect.value === sec.name) {
+            filterSectorSelect.value = 'ALL';
+          } else {
+            filterSectorSelect.value = sec.name;
+          }
+          handleSectorSelectionChange();
+        });
+
+        sectorRankingsContainer.appendChild(card);
+      });
+    }
+
+    function handleSectorSelectionChange() {
+      const selected = filterSectorSelect.value;
+      if (selected === 'ALL') {
+        activeSectorBadge.textContent = 'All Sectors';
+        btnResetSector.classList.add('hidden');
+      } else {
+        activeSectorBadge.textContent = selected;
+        btnResetSector.classList.remove('hidden');
+      }
+      renderSectorLeaderboard();
+      renderScreener();
+    }
+
+    btnResetSector.addEventListener('click', () => {
+      filterSectorSelect.value = 'ALL';
+      handleSectorSelectionChange();
+    });
 
     /**
      * Categorizes stock based on Weinstein Early Stage 2 criteria:
@@ -517,7 +646,7 @@
         tableBody.innerHTML = `
           <tr>
             <td colspan="7" class="py-8 text-center text-slate-500 font-sans">
-              No stocks matched current criteria. Try increasing the days slider or broadening the proximity % threshold.
+              No stocks matched current criteria. Try increasing the days slider or selecting a different sector.
             </td>
           </tr>
         `;
@@ -733,7 +862,7 @@
     filterDaysSlider.addEventListener('input', renderScreener);
     filterProximitySlider.addEventListener('input', renderScreener);
     filterStatusSelect.addEventListener('change', renderScreener);
-    filterSectorSelect.addEventListener('change', renderScreener);
+    filterSectorSelect.addEventListener('change', handleSectorSelectionChange);
 
     // Add new ticker handler
     btnAddTicker.addEventListener('click', () => {
@@ -754,7 +883,7 @@
       const newStock = {
         ticker: ticker,
         name: `${ticker} Equity Holdings`,
-        sector: 'Technology',
+        sector: filterSectorSelect.value !== 'ALL' ? filterSectorSelect.value : 'Technology',
         price: randomPrice,
         change: parseFloat(((Math.random() * 4) - 1.5).toFixed(2)),
         ma50: parseFloat((randomPrice * 0.97).toFixed(2)),
@@ -781,6 +910,13 @@
       icon.classList.add('animate-spin');
       
       setTimeout(() => {
+        // Slightly wiggle sector stats to simulate live rotation
+        SECTOR_DATA.forEach(sec => {
+          sec.perf3M = parseFloat((sec.perf3M + (Math.random() - 0.48) * 0.4).toFixed(1));
+          sec.rsRating = Math.min(99, Math.max(15, Math.round(sec.rsRating + (Math.random() - 0.48) * 2)));
+        });
+        SECTOR_DATA.sort((a, b) => b.perf3M - a.perf3M);
+
         // Slightly wiggle prices to simulate live market pulse
         marketData = marketData.map(s => {
           const deltaPct = (Math.random() - 0.49) * 0.02;
@@ -792,6 +928,7 @@
           };
         });
 
+        renderSectorLeaderboard();
         renderScreener();
         updateSelectedStockView(selectedTicker);
         icon.classList.remove('animate-spin');
@@ -831,6 +968,7 @@
     // Initial page load
     window.onload = () => {
       lucide.createIcons();
+      renderSectorLeaderboard();
       renderScreener();
       updateSelectedStockView(selectedTicker);
     };
