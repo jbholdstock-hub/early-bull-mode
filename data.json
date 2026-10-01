@@ -1,93 +1,146 @@
 {
-  "last_updated": "2026-10-01 19:53 UTC",
-  "sectors": [
+  "last_updated": "2026-10-01 20:04 UTC",
+  "leading_etfs": [
     {
       "ticker": "XLE",
       "name": "Energy",
-      "price": 62.72,
-      "return_3m": 15.08,
+      "price": 62.69,
+      "return_3m": 15.04,
       "status": "leading",
       "rank": 1
     },
     {
       "ticker": "XLK",
       "name": "Technology",
-      "price": 198.28,
-      "return_3m": 7.1,
+      "price": 197.88,
+      "return_3m": 6.88,
       "status": "leading",
       "rank": 2
     },
     {
       "ticker": "XLV",
       "name": "Healthcare",
-      "price": 166.49,
-      "return_3m": 3.05,
+      "price": 166.19,
+      "return_3m": 2.87,
       "status": "leading",
       "rank": 3
-    },
+    }
+  ],
+  "improving_etfs": [
     {
       "ticker": "XLC",
       "name": "Communication Services",
-      "price": 110.05,
-      "return_3m": -0.09,
+      "price": 109.96,
+      "return_3m": -0.17,
       "status": "improving",
       "rank": 4
     },
     {
       "ticker": "XLP",
       "name": "Consumer Staples",
-      "price": 80.46,
-      "return_3m": -2.65,
+      "price": 80.35,
+      "return_3m": -2.8,
       "status": "improving",
       "rank": 5
     },
     {
       "ticker": "XLB",
       "name": "Materials",
-      "price": 48.56,
-      "return_3m": -2.95,
+      "price": 48.54,
+      "return_3m": -2.98,
+      "status": "improving",
+      "rank": 6
+    }
+  ],
+  "sectors": [
+    {
+      "ticker": "XLE",
+      "name": "Energy",
+      "price": 62.69,
+      "return_3m": 15.04,
+      "status": "leading",
+      "rank": 1
+    },
+    {
+      "ticker": "XLK",
+      "name": "Technology",
+      "price": 197.88,
+      "return_3m": 6.88,
+      "status": "leading",
+      "rank": 2
+    },
+    {
+      "ticker": "XLV",
+      "name": "Healthcare",
+      "price": 166.19,
+      "return_3m": 2.87,
+      "status": "leading",
+      "rank": 3
+    },
+    {
+      "ticker": "XLC",
+      "name": "Communication Services",
+      "price": 109.96,
+      "return_3m": -0.17,
+      "status": "improving",
+      "rank": 4
+    },
+    {
+      "ticker": "XLP",
+      "name": "Consumer Staples",
+      "price": 80.35,
+      "return_3m": -2.8,
+      "status": "improving",
+      "rank": 5
+    },
+    {
+      "ticker": "XLB",
+      "name": "Materials",
+      "price": 48.54,
+      "return_3m": -2.98,
       "status": "improving",
       "rank": 6
     },
     {
       "ticker": "XLF",
       "name": "Financials",
-      "price": 53.5,
-      "return_3m": -3.33,
+      "price": 53.47,
+      "return_3m": -3.38,
       "status": "weakening",
       "rank": 7
     },
     {
-      "ticker": "XLY",
-      "name": "Consumer Discretionary",
-      "price": 108.95,
-      "return_3m": -6.56,
+      "ticker": "XLI",
+      "name": "Industrials",
+      "price": 168.66,
+      "return_3m": -6.62,
       "status": "weakening",
       "rank": 8
     },
     {
-      "ticker": "XLI",
-      "name": "Industrials",
-      "price": 168.73,
-      "return_3m": -6.59,
+      "ticker": "XLY",
+      "name": "Consumer Discretionary",
+      "price": 108.84,
+      "return_3m": -6.65,
       "status": "weakening",
       "rank": 9
     },
     {
       "ticker": "XLRE",
       "name": "Real Estate",
-      "price": 40.78,
-      "return_3m": -7.03,
+      "price": 40.69,
+      "return_3m": -7.23,
       "status": "lagging",
       "rank": 10
     },
     {
       "ticker": "XLU",
       "name": "Utilities",
-      "price": 39.71,
-      "return_3m": -11.37,
+      "price": 39.67,
+      "return_3m": -11.45,
       "status": "lagging",
       "rank": 11
     }
-  ]
+  ],
+  "candidate_stocks": []
 }
