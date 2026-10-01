@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stage 2 Early Bull & Sector Rotation Scanner</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js for technical moving average visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            fintech: {
+              950: '#06090e',
+              900: '#0b111b',
+              850: '#101927',
+              800: '#162235',
+              700: '#1e2e47',
+              600: '#2c4265',
+              bull: '#10b981',
+              cyan: '#06b6d4',
+              gold: '#f59e0b',
+              bear: '#f43f5e'
+            }
+          },
+          fontFamily: {
+            mono: ['JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', 'monospace'],
+            sans: ['Inter', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom sleek scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #06090e; }
+    ::-webkit-scrollbar-thumb { background: #1e2e47; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #2c4265; }
+
+    /* Flash animations for real-time quote refresh */
+    @keyframes priceFlashGreen {
+      0% { background-color: rgba(16, 185, 129, 0.35); }
+      100% { background-color: transparent; }
+    }
+    @keyframes priceFlashRed {
+      0% { background-color: rgba(244, 63, 94, 0.35); }
+      100% { background-color: transparent; }
+    }
+    .flash-up { animation: priceFlashGreen 1.2s ease-out; }
+    .flash-down { animation: priceFlashRed 1.2s ease-out; }
+  </style>
+</head>
+
+<body class="bg-fintech-950 text-slate-100 font-sans min-h-screen flex flex-col selection:bg-emerald-500/20 selection:text-emerald-300">
+
+  <!-- Top Navigation & Live Control Bar -->
+  <header class="border-b border-slate-800/90 bg-fintech-900/90 backdrop-blur sticky top-0 z-40 px-4 lg:px-8 py-3.5">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+      
+      <!-- Brand & Status -->
+      <div class="flex items-center space-x-3 w-full sm:w-auto">
+        <div class="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+          <i data-lucide="line-chart" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-1.5">
+              STAGE 2 <span class="text-emerald-400 font-mono text-xs px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-800">EARLY BULL</span> SCANNER
+            </h1>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-emerald-950/50 text-emerald-400 border border-emerald-900">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> LIVE
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">Sector Rotation &amp; Stan Weinstein Momentum Engine</p>
+        </div>
+      </div>
+
+      <!-- Live Refresh Controls -->
+      <div class="flex items-center space-x-2 sm:space-x-3 w-full sm:w-auto justify-between sm:justify-end">
+        <div class="text-right hidden sm:block">
+          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">Last Market Scan</div>
+          <div class="text-xs font-mono text-slate-300" id="last-updated-time">--:--:--</div>
+        </div>
+
+        <button id="btn-deploy-guide" class="text-xs px-3 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-1.5">
+          <i data-lucide="github" class="w-3.5 h-3.5"></i>
+          <span class="hidden md:inline">Deploy to</span> GitHub
+        </button>
+
+        <button id="btn-refresh" class="text-xs px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold shadow-lg shadow-emerald-500/10 transition-all flex items-center gap-2 active:scale-95">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5 transition-transform" id="refresh-icon"></i>
+          <span>Refresh Data</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto w-full px-4 lg:px-8 py-6 flex-1 space-y-6">
+
+    <!-- Market Overview Stat Cards -->
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-3 lg:gap-4">
+      <div class="bg-fintech-900 border border-slate-800 rounded-xl p-4">
+        <div class="text-slate-400 text-xs font-medium flex items-center justify-between">
+          <span>Leading Sector ETFs</span>
+          <i data-lucide="layers" class="w-4 h-4 text-emerald-400"></i>
+        </div>
+        <div class="mt-2 text-2xl font-bold font-mono text-emerald-400" id="stat-leading-etfs">0</div>
+        <p class="text-[11px] text-slate-500 mt-1">RS Rating &ge; 80 (Momentum Leaders)</p>
+      </div>
+
+      <div class="bg-fintech-900 border border-slate-800 rounded-xl p-4">
+        <div class="text-slate-400 text-xs font-medium flex items-center justify-between">
+          <span>Early Bull Breakouts</span>
+          <i data-lucide="zap" class="w-4 h-4 text-cyan-400"></i>
+        </div>
+        <div class="mt-2 text-2xl font-bold font-mono text-cyan-300" id="stat-bull-count">0</div>
+        <p class="text-[11px] text-slate-500 mt-1">Passed Golden Cross &amp; Support test</p>
+      </div>
+
+      <div class="bg-fintech-900 border border-slate-800 rounded-xl p-4">
+        <div class="text-slate-400 text-xs font-medium flex items-center justify-between">
+          <span>Top Inflow Sector</span>
+          <i data-lucide="compass" class="w-4 h-4 text-amber-400"></i>
+        </div>
+        <div class="mt-2 text-base font-bold truncate text-white" id="stat-top-sector">Technology (XLK)</div>
+        <p class="text-[11px] text-emerald-400 mt-1" id="stat-top-return">+0.0% 3M Alpha</p>
+      </div>
+
+      <div class="bg-fintech-900 border border-slate-800 rounded-xl p-4">
+        <div class="text-slate-400 text-xs font-medium flex items-center justify-between">
+          <span>Institutional Flow</span>
+          <i data-lucide="shield-alert" class="w-4 h-4 text-indigo-400"></i>
+        </div>
+        <div class="mt-2 text-base font-bold font-mono text-indigo-300">RISK-ON ROTATION</div>
+        <p class="text-[11px] text-slate-500 mt-1">Cyclical &amp; Growth outperforming</p>
+      </div>
+    </section>
+
+    <section class="bg-gradient-to-r from-fintech-900 via-fintech-850 to-fintech-900 border border-emerald-500/30 rounded-2xl p-5 shadow-xl relative overflow-hidden">
+      <div class="absolute -right-16 -top-16 w-48 h-48 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800/80">
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-800 uppercase tracking-wider">
+              Primary Inflow Target
+            </span>
+            <h2 class="text-base font-bold text-white flex items-center gap-2">
+              Leading Sector Benchmark ETFs
+            </h2>
+          </div>
+          <p class="text-xs text-slate-400 mt-0.5">
+            Focus stock picks exclusively within these sectors to ensure you trade with institutional tailwinds.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2 text-xs">
+          <span class="text-slate-400">Click card to filter stock screener below:</span>
+        </div>
+      </div>
+
+      <!-- Leading ETFs Cards Container -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-4" id="leading-etfs-container">
+        <!-- Injected via JavaScript -->
+      </div>
+    </section>
+
+    <section class="bg-fintech-900 border border-slate-800 rounded-xl p-4 lg:p-5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+        <div>
+          <h2 class="text-sm font-semibold text-white flex items-center gap-2">
+            <i data-lucide="bar-chart-2" class="w-4 h-4 text-cyan-400"></i>
+            Full 11-Sector Relative Strength (RS) Ranking
+          </h2>
+          <p class="text-xs text-slate-400">Ranked by 3-Month Performance &amp; RRG Momentum. Click any sector to toggle focus.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-[11px] text-slate-400">Active Filter:</span>
+          <span id="active-sector-badge" class="text-xs font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">All Sectors</span>
+          <button id="btn-reset-sector" class="text-[11px] text-slate-400 hover:text-white underline hidden">Clear</button>
+        </div>
+      </div>
+
+      <!-- Sector ranking grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 pt-3" id="all-sectors-container">
+        <!-- Injected via JavaScript -->
+      </div>
+    </section>
+
+    <section class="bg-fintech-900 border border-slate-800 rounded-xl p-4 lg:p-5">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
+        <div>
+          <h2 class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+            <i data-lucide="sliders" class="w-4 h-4 text-cyan-400"></i>
+            Stage 2 Screener Parameters
+          </h2>
+          <p class="text-xs text-slate-400">Stan Weinstein rules: Fresh Golden Cross &amp; tight proximity to 50-day MA</p>
+        </div>
+
+        <!-- Custom ticker addition input -->
+        <div class="flex items-center space-x-2 w-full md:w-auto">
+          <input 
+            type="text" 
+            id="input-new-ticker" 
+            placeholder="Add ticker (e.g. CRWD)" 
+            class="uppercase bg-fintech-950 border border-slate-700 text-xs rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 w-full md:w-44 font-mono"
+            maxlength="6"
+          />
+          <button id="btn-add-ticker" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs px-3.5 py-2 rounded-lg font-medium transition flex items-center gap-1 shrink-0">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            <span>Add</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Sliders and dropdowns grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4">
+        <!-- Slider: Max Days Since Golden Cross -->
+        <div class="space-y-1.5">
+          <div class="flex justify-between items-center text-xs">
+            <label for="filter-days" class="text-slate-300 font-medium">Max Days Since Cross</label>
+            <span id="label-max-days" class="font-mono text-cyan-400 bg-cyan-950/70 border border-cyan-900 px-1.5 rounded">15 days</span>
+          </div>
+          <input type="range" id="filter-days" min="3" max="35" value="15" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+          <div class="flex justify-between text-[10px] text-slate-500">
+            <span>3d (Ultra-fresh)</span>
+            <span>35d (Established)</span>
+          </div>
+        </div>
+
+        <!-- Slider: Proximity to 50 MA -->
+        <div class="space-y-1.5">
+          <div class="flex justify-between items-center text-xs">
+            <label for="filter-proximity" class="text-slate-300 font-medium">Max Dist. from 50 MA</label>
+            <span id="label-max-proximity" class="font-mono text-emerald-400 bg-emerald-950/70 border border-emerald-900 px-1.5 rounded">&le; 5.0%</span>
+          </div>
+          <input type="range" id="filter-proximity" min="1" max="15" step="0.5" value="5.0" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-400">
+          <div class="flex justify-between text-[10px] text-slate-500">
+            <span>1% (At baseline)</span>
+            <span>15% (Extended)</span>
+          </div>
+        </div>
+
+        <!-- Status Filter Dropdown -->
+        <div class="space-y-1.5">
+          <label for="filter-status" class="block text-xs font-medium text-slate-300">Setup Status</label>
+          <select id="filter-status" class="w-full bg-fintech-950 border border-slate-700 rounded-lg text-xs px-2.5 py-1.5 text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+            <option value="ALL">All Watchlist Stocks</option>
+            <option value="EARLY_BULL" selected>🟢 Stage 2 Breakout Only</option>
+            <option value="WATCHING">🟡 Basing / Watchlist</option>
+            <option value="EXTENDED">⚪ Extended Rally</option>
+          </select>
+        </div>
+
+        <!-- Sector Filter Dropdown -->
+        <div class="space-y-1.5">
+          <label for="filter-sector" class="block text-xs font-medium text-slate-300">Sector Constraint</label>
+          <select id="filter-sector" class="w-full bg-fintech-950 border border-slate-700 rounded-lg text-xs px-2.5 py-1.5 text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+            <option value="ALL">All 11 Sectors</option>
+            <option value="Technology">Technology (XLK)</option>
+            <option value="Energy">Energy (XLE)</option>
+            <option value="Communication Services">Communication Services (XLC)</option>
+            <option value="Industrials">Industrials (XLI)</option>
+            <option value="Financials">Financials (XLF)</option>
+            <option value="Consumer Discretionary">Consumer Discretionary (XLY)</option>
+            <option value="Materials">Materials (XLB)</option>
+            <option value="Healthcare">Healthcare (XLV)</option>
+            <option value="Consumer Staples">Consumer Staples (XLP)</option>
+            <option value="Utilities">Utilities (XLU)</option>
+            <option value="Real Estate">Real Estate (XLRE)</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-fintech-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col">
+      <div class="p-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div class="flex items-center space-x-2">
+          <h2 class="text-sm font-semibold text-white flex items-center gap-1.5">
+            <i data-lucide="target" class="w-4 h-4 text-emerald-400"></i>
+            Early Bull Mode Candidates
+          </h2>
+          <span id="filtered-count" class="text-xs text-slate-400 font-mono">(0 stocks found)</span>
+        </div>
+        <div class="flex items-center space-x-3 text-[11px] text-slate-400">
+          <span class="hidden md:inline">Click any row to view Chart &amp; Moving Averages</span>
+          <button id="btn-export-csv" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-1">
+            <i data-lucide="download" class="w-3 h-3"></i> Export CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- Responsive Table Container -->
+      <div class="overflow-x-auto flex-1">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-fintech-950 text-slate-400 uppercase font-mono text-[10px] tracking-wider border-b border-slate-800">
+              <th class="py-3 px-3">Ticker / Company</th>
+              <th class="py-3 px-3">Sector (Benchmark ETF)</th>
+              <th class="py-3 px-3 text-right">Price</th>
+              <th class="py-3 px-3 text-right hidden sm:table-cell">50 MA</th>
+              <th class="py-3 px-3 text-right hidden md:table-cell">200 MA</th>
+              <th class="py-3 px-3 text-center">Days Cross</th>
+              <th class="py-3 px-3 text-right">Dist 50MA</th>
+              <th class="py-3 px-3 text-center">Inst. Volume</th>
+              <th class="py-3 px-3 text-center">Setup Status</th>
+            </tr>
+          </thead>
+          <tbody id="screener-table-body" class="divide-y divide-slate-800/60 font-mono">
+            <!-- Dynamically injected rows -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="p-3 border-t border-slate-800 bg-fintech-950/60 text-[11px] text-slate-400 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center space-x-4">
+          <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Stage 2 Breakout (Ready for Entry)</span>
+          <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Stage 1 Base (Wait for Breakout)</span>
+        </div>
+        <span class="font-mono text-slate-500">Rule: Price &gt; 50MA &gt; 200MA &bull; Cross &le; 15d</span>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="modal-chart" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-fintech-900 border border-slate-700 rounded-2xl max-w-2xl w-full p-5 lg:p-6 space-y-4 shadow-2xl">
+      <div class="flex items-start justify-between border-b border-slate-800 pb-3">
+        <div>
+          <div class="flex items-center space-x-2">
+            <h3 class="text-xl font-bold font-mono text-white tracking-wide" id="modal-ticker">NVDA</h3>
+            <span class="text-xs px-2 py-0.5 rounded font-mono bg-emerald-950 text-emerald-400 border border-emerald-800" id="modal-badge">STAGE 2 BREAKOUT</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-0.5" id="modal-company-info">NVIDIA Corporation &bull; Technology (XLK)</p>
+        </div>
+        <div class="flex items-center space-x-3">
+          <div class="text-right">
+            <div class="text-lg font-bold font-mono text-slate-100" id="modal-price">$225.32</div>
+            <span class="text-[11px] font-mono text-emerald-400" id="modal-change">+2.8%</span>
+          </div>
+          <button id="btn-close-chart" class="text-slate-400 hover:text-white p-1 rounded-lg">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Grid -->
+      <div class="grid grid-cols-4 gap-2 p-2.5 rounded-lg bg-fintech-950 border border-slate-800 text-center font-mono">
+        <div>
+          <div class="text-[9px] uppercase text-slate-500">50-Day MA</div>
+          <div class="text-xs text-cyan-400 font-semibold" id="modal-ma50">$218.40</div>
+        </div>
+        <div>
+          <div class="text-[9px] uppercase text-slate-500">200-Day MA</div>
+          <div class="text-xs text-amber-400 font-semibold" id="modal-ma200">$214.10</div>
+        </div>
+        <div>
+          <div class="text-[9px] uppercase text-slate-500">Days Since Cross</div>
+          <div class="text-xs text-emerald-400 font-semibold" id="modal-days-cross">7d</div>
+        </div>
+        <div>
+          <div class="text-[9px] uppercase text-slate-500">Launchpad Dist</div>
+          <div class="text-xs text-slate-200 font-semibold" id="modal-dist-50">+3.2%</div>
+        </div>
+      </div>
+
+      <!-- Chart.js canvas -->
+      <div class="relative w-full h-64">
+        <canvas id="stockModalChart"></canvas>
+      </div>
+
+      <!-- Checklist validation -->
+      <div class="p-3 bg-fintech-950/80 rounded-lg border border-slate-800/80 text-xs space-y-1.5 font-sans">
+        <div class="text-[11px] font-semibold text-slate-300 uppercase tracking-wide">Weinstein Stage 2 Rules:</div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-slate-400 text-[11px]" id="modal-checklist">
+          <!-- Injected via JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-deploy" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-fintech-900 border border-slate-700 rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center space-x-2">
+          <i data-lucide="github" class="w-5 h-5 text-white"></i>
+          <h3 class="text-base font-bold text-white">Deploy to GitHub Pages (100% Free)</h3>
+        </div>
+        <button id="btn-close-deploy" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="text-xs text-slate-300 space-y-3 leading-relaxed">
+        <p>This entire dashboard is a <strong>self-contained single-file HTML application</strong> with embedded styling, charts, and simulated live data. No build step or Node.js server required:</p>
+        
+        <ol class="list-decimal list-inside space-y-2 text-slate-400">
+          <li>Create a free repository on <strong class="text-slate-200">GitHub.com</strong> named <code class="text-emerald-400 bg-slate-950 px-1.5 py-0.5 rounded">bull-scanner</code>.</li>
+          <li>Save this code into a file named <strong class="text-white font-mono">index.html</strong> and upload it to the repository.</li>
+          <li>Go to <strong class="text-slate-200">Settings</strong> &rarr; <strong class="text-slate-200">Pages</strong>.</li>
+          <li>Under <em>Build and deployment</em>, set Source to <strong class="text-slate-200">"Deploy from a branch"</strong>, select <strong class="text-slate-200">main</strong> branch, and click <strong class="text-slate-200">Save</strong>.</li>
+        </ol>
+
+        <div class="p-3 bg-emerald-950/40 border border-emerald-900 rounded-lg text-emerald-300">
+          Your live URL will be: <code class="font-mono text-white">https://&lt;your-username&gt;.github.io/bull-scanner/</code>
+        </div>
+      </div>
+
+      <div class="pt-2 flex justify-end">
+        <button id="btn-close-deploy-2" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-medium transition">
+          Close Guide
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* -------------------------------------------------------------
+       11 SECTOR ETFS & RELATIVE ROTATION (RRG) METRICS
+       ------------------------------------------------------------- */
+    let SECTOR_ETFS = [
+      { name: 'Technology', ticker: 'XLK', perf3M: 14.8, rsRating: 94, phase: 'LEADING', badgeClass: 'bg-emerald-950/80 text-emerald-400 border-emerald-800' },
+      { name: 'Energy', ticker: 'XLE', perf3M: 11.2, rsRating: 88, phase: 'LEADING', badgeClass: 'bg-emerald-950/80 text-emerald-400 border-emerald-800' },
+      { name: 'Communication Services', ticker: 'XLC', perf3M: 9.3, rsRating: 84, phase: 'LEADING', badgeClass: 'bg-emerald-950/80 text-emerald-400 border-emerald-800' },
+      { name: 'Industrials', ticker: 'XLI', perf3M: 6.4, rsRating: 75, phase: 'IMPROVING', badgeClass: 'bg-cyan-950/80 text-cyan-400 border-cyan-800' },
+      { name: 'Financials', ticker: 'XLF', perf3M: 5.1, rsRating: 71, phase: 'IMPROVING', badgeClass: 'bg-cyan-950/80 text-cyan-400 border-cyan-800' },
+      { name: 'Consumer Discretionary', ticker: 'XLY', perf3M: 3.2, rsRating: 62, phase: 'WEAKENING', badgeClass: 'bg-amber-950/80 text-amber-300 border-amber-800' },
+      { name: 'Materials', ticker: 'XLB', perf3M: 1.1, rsRating: 54, phase: 'WEAKENING', badgeClass: 'bg-amber-950/80 text-amber-300 border-amber-800' },
+      { name: 'Healthcare', ticker: 'XLV', perf3M: -0.9, rsRating: 45, phase: 'LAGGING', badgeClass: 'bg-rose-950/80 text-rose-400 border-rose-800' },
+      { name: 'Consumer Staples', ticker: 'XLP', perf3M: -2.1, rsRating: 38, phase: 'LAGGING', badgeClass: 'bg-rose-950/80 text-rose-400 border-rose-800' },
+      { name: 'Utilities', ticker: 'XLU', perf3M: -3.4, rsRating: 31, phase: 'LAGGING', badgeClass: 'bg-rose-950/80 text-rose-400 border-rose-800' },
+      { name: 'Real Estate', ticker: 'XLRE', perf3M: -4.8, rsRating: 24, phase: 'LAGGING', badgeClass: 'bg-rose-950/80 text-rose-400 border-rose-800' }
+    ];
+
+    /* -------------------------------------------------------------
+       MARKET UNIVERSE & QUANTITATIVE DATA
+       ------------------------------------------------------------- */
+    const INITIAL_STOCK_DATA = [
+      { ticker: 'NVDA', name: 'NVIDIA Corporation', sector: 'Technology', etf: 'XLK', price: 225.32, change: 2.8, ma50: 218.40, ma200: 214.10, daysSinceCross: 7, volumeSurge: '2.4x Vol' },
+      { ticker: 'AVGO', name: 'Broadcom Inc.', sector: 'Technology', etf: 'XLK', price: 425.19, change: 1.4, ma50: 412.00, ma200: 408.50, daysSinceCross: 12, volumeSurge: '1.8x Vol' },
+      { ticker: 'XOM', name: 'Exxon Mobil Corp.', sector: 'Energy', etf: 'XLE', price: 157.92, change: 0.9, ma50: 154.20, ma200: 152.00, daysSinceCross: 9, volumeSurge: '2.1x Vol' },
+      { ticker: 'COP', name: 'ConocoPhillips', sector: 'Energy', etf: 'XLE', price: 122.41, change: -0.4, ma50: 120.10, ma200: 119.20, daysSinceCross: 14, volumeSurge: '1.6x Vol' },
+      { ticker: 'SLB', name: 'Schlumberger Ltd.', sector: 'Energy', etf: 'XLE', price: 55.38, change: -1.1, ma50: 54.10, ma200: 53.60, daysSinceCross: 5, volumeSurge: '2.9x Vol' },
+      { ticker: 'EOG', name: 'EOG Resources', sector: 'Energy', etf: 'XLE', price: 140.26, change: 0.3, ma50: 138.00, ma200: 137.10, daysSinceCross: 8, volumeSurge: '1.5x Vol' },
+      { ticker: 'GOOGL', name: 'Alphabet Inc.', sector: 'Communication Services', etf: 'XLC', price: 396.78, change: 1.2, ma50: 385.10, ma200: 382.40, daysSinceCross: 11, volumeSurge: '1.7x Vol' },
+      { ticker: 'AAPL', name: 'Apple Inc.', sector: 'Technology', etf: 'XLK', price: 300.23, change: 0.6, ma50: 275.50, ma200: 240.10, daysSinceCross: 85, volumeSurge: 'Normal' },
+      { ticker: 'GE', name: 'GE Aerospace', sector: 'Industrials', etf: 'XLI', price: 182.40, change: 1.5, ma50: 177.20, ma200: 174.50, daysSinceCross: 10, volumeSurge: '1.9x Vol' },
+      { ticker: 'CAT', name: 'Caterpillar Inc.', sector: 'Industrials', etf: 'XLI', price: 345.10, change: -0.2, ma50: 341.00, ma200: 343.50, daysSinceCross: -4, volumeSurge: 'Normal' },
+      { ticker: 'JPM', name: 'JPMorgan Chase', sector: 'Financials', etf: 'XLF', price: 212.80, change: 0.7, ma50: 202.10, ma200: 195.40, daysSinceCross: 38, volumeSurge: 'Normal' },
+      { ticker: 'LLY', name: 'Eli Lilly & Co.', sector: 'Healthcare', etf: 'XLV', price: 890.50, change: -0.8, ma50: 920.00, ma200: 895.00, daysSinceCross: -15, volumeSurge: 'Normal' },
+      { ticker: 'MSFT', name: 'Microsoft Corp.', sector: 'Technology', etf: 'XLK', price: 448.90, change: 0.4, ma50: 442.10, ma200: 439.80, daysSinceCross: 13, volumeSurge: '1.4x Vol' },
+      { ticker: 'PLTR', name: 'Palantir Tech', sector: 'Technology', etf: 'XLK', price: 34.20, change: 3.5, ma50: 33.10, ma200: 32.70, daysSinceCross: 4, volumeSurge: '3.1x Vol' }
+    ];
+
+    let marketData = JSON.parse(localStorage.getItem('bull_scanner_stocks_v2')) || INITIAL_STOCK_DATA;
+    let modalChartInstance = null;
+    let updatedTickerFlashes = new Set();
+
+    // DOM references
+    const leadingEtfsContainer = document.getElementById('leading-etfs-container');
+    const allSectorsContainer = document.getElementById('all-sectors-container');
+    const tableBody = document.getElementById('screener-table-body');
+    const filterDaysSlider = document.getElementById('filter-days');
+    const labelMaxDays = document.getElementById('label-max-days');
+    const filterProximitySlider = document.getElementById('filter-proximity');
+    const labelMaxProximity = document.getElementById('label-max-proximity');
+    const filterStatusSelect = document.getElementById('filter-status');
+    const filterSectorSelect = document.getElementById('filter-sector');
+    const filteredCountLabel = document.getElementById('filtered-count');
+    const activeSectorBadge = document.getElementById('active-sector-badge');
+    const btnResetSector = document.getElementById('btn-reset-sector');
+    const lastUpdatedTimeEl = document.getElementById('last-updated-time');
+
+    const statLeadingEtfs = document.getElementById('stat-leading-etfs');
+    const statBullCount = document.getElementById('stat-bull-count');
+    const statTopSector = document.getElementById('stat-top-sector');
+    const statTopReturn = document.getElementById('stat-top-return');
+
+    const btnRefresh = document.getElementById('btn-refresh');
+    const refreshIcon = document.getElementById('refresh-icon');
+    const btnAddTicker = document.getElementById('btn-add-ticker');
+    const inputNewTicker = document.getElementById('input-new-ticker');
+    const btnExportCSV = document.getElementById('btn-export-csv');
+
+    const modalChart = document.getElementById('modal-chart');
+    const btnCloseChart = document.getElementById('btn-close-chart');
+    const modalDeploy = document.getElementById('modal-deploy');
+    const btnDeployGuide = document.getElementById('btn-deploy-guide');
+    const btnCloseDeploy = document.getElementById('btn-close-deploy');
+    const btnCloseDeploy2 = document.getElementById('btn-close-deploy-2');
+
+    // Helper map from Sector Name to ETF ticker
+    const SECTOR_TO_ETF = {};
+    SECTOR_ETFS.forEach(s => SECTOR_TO_ETF[s.name] = s.ticker);
+
+    function renderLeadingEtfs() {
+      leadingEtfsContainer.innerHTML = '';
+      const leadingSectors = SECTOR_ETFS.filter(s => s.phase === 'LEADING');
+      statLeadingEtfs.textContent = leadingSectors.length;
+
+      leadingSectors.forEach(sec => {
+        const isCurrentFilter = (filterSectorSelect.value === sec.name);
+        const card = document.createElement('div');
+        card.className = `p-4 rounded-xl border transition-all cursor-pointer relative overflow-hidden group ${
+          isCurrentFilter 
+            ? 'bg-fintech-800 border-emerald-400 ring-2 ring-emerald-500/30 shadow-lg' 
+            : 'bg-fintech-950/70 border-slate-800 hover:border-slate-700 hover:bg-fintech-850'
+        }`;
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="font-mono text-base font-bold text-white">${sec.ticker}</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">
+                ★ LEADING
+              </span>
+            </div>
+            <button class="btn-copy-etf text-[11px] font-mono text-slate-400 hover:text-white px-2 py-1 rounded bg-slate-800/80 border border-slate-700 hover:bg-slate-700 transition" data-ticker="${sec.ticker}">
+              Copy
+            </button>
+          </div>
+
+          <div class="mt-2.5">
+            <div class="text-xs font-semibold text-slate-300">${sec.name}</div>
+            <div class="flex items-baseline justify-between mt-1">
+              <span class="text-xs text-slate-400">RS Strength: <strong class="text-white font-mono">${sec.rsRating}/100</strong></span>
+              <span class="text-sm font-mono font-bold text-emerald-400">+${sec.perf3M.toFixed(1)}%</span>
+            </div>
+          </div>
+
+          <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mt-2.5">
+            <div class="h-full bg-gradient-to-r from-emerald-500 to-cyan-400" style="width: ${sec.rsRating}%"></div>
+          </div>
+
+          <div class="mt-2 flex items-center justify-between text-[11px] text-slate-500 group-hover:text-slate-400">
+            <span>Filter by this sector &rarr;</span>
+            <i data-lucide="filter" class="w-3 h-3"></i>
+          </div>
+        `;
+
+        // Card click filters table
+        card.addEventListener('click', (e) => {
+          if (e.target.closest('.btn-copy-etf')) return;
+          toggleSectorFilter(sec.name);
+        });
+
+        leadingEtfsContainer.appendChild(card);
+      });
+
+      // Attach copy listeners
+      document.querySelectorAll('.btn-copy-etf').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const ticker = btn.getAttribute('data-ticker');
+          copyToClipboard(ticker, btn);
+        });
+      });
+    }
+
+    function renderAllSectors() {
+      allSectorsContainer.innerHTML = '';
+
+      if (SECTOR_ETFS.length > 0) {
+        statTopSector.textContent = `${SECTOR_ETFS[0].name} (${SECTOR_ETFS[0].ticker})`;
+        statTopReturn.textContent = `+${SECTOR_ETFS[0].perf3M.toFixed(1)}% 3M (Rank #1)`;
+      }
+
+      SECTOR_ETFS.forEach((sec, idx) => {
+        const isSelected = (filterSectorSelect.value === sec.name);
+        const card = document.createElement('div');
+        card.className = `p-2.5 rounded-lg border cursor-pointer transition flex flex-col justify-between ${
+          isSelected 
+            ? 'bg-fintech-800 border-cyan-500 shadow-md ring-1 ring-cyan-500' 
+            : 'bg-fintech-950 border-slate-800 hover:border-slate-700 hover:bg-fintech-850'
+        }`;
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-mono text-[10px] text-slate-500 font-bold">#${idx + 1}</span>
+            <span class="text-[9px] px-1.5 py-0.2 rounded font-mono border ${sec.badgeClass}">
+              ${sec.phase}
+            </span>
+          </div>
+          <div class="my-1.5">
+            <div class="text-xs font-bold text-slate-200 truncate flex items-center justify-between">
+              <span>${sec.name}</span>
+              <span class="text-[10px] font-mono text-slate-400">${sec.ticker}</span>
+            </div>
+            <div class="flex items-baseline justify-between mt-0.5">
+              <span class="text-[10px] text-slate-400">RS: <strong class="text-slate-200 font-mono">${sec.rsRating}</strong></span>
+              <span class="text-xs font-mono font-semibold ${sec.perf3M >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                ${sec.perf3M >= 0 ? '+' : ''}${sec.perf3M.toFixed(1)}%
+              </span>
+            </div>
+          </div>
+          <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden mt-1">
+            <div class="h-full ${sec.perf3M >= 0 ? 'bg-emerald-500' : 'bg-rose-500'}" style="width: ${Math.min(Math.max((sec.rsRating), 5), 100)}%"></div>
+          </div>
+        `;
+
+        card.addEventListener('click', () => {
+          toggleSectorFilter(sec.name);
+        });
+
+        allSectorsContainer.appendChild(card);
+      });
+    }
+
+    function toggleSectorFilter(sectorName) {
+      if (filterSectorSelect.value === sectorName) {
+        filterSectorSelect.value = 'ALL';
+      } else {
+        filterSectorSelect.value = sectorName;
+      }
+      handleSectorChange();
+    }
+
+    function handleSectorChange() {
+      const selected = filterSectorSelect.value;
+      if (selected === 'ALL') {
+        activeSectorBadge.textContent = 'All Sectors';
+        btnResetSector.classList.add('hidden');
+      } else {
+        activeSectorBadge.textContent = selected;
+        btnResetSector.classList.remove('hidden');
+      }
+      renderLeadingEtfs();
+      renderAllSectors();
+      renderScreenerTable();
+      lucide.createIcons();
+    }
+
+    btnResetSector.addEventListener('click', () => {
+      filterSectorSelect.value = 'ALL';
+      handleSectorChange();
+    });
+
+    function evaluateStock(stock, maxDays, maxProximityPct) {
+      const isGoldenCross = stock.ma50 > stock.ma200;
+      const isFresh = stock.daysSinceCross > 0 && stock.daysSinceCross <= maxDays;
+      const distFrom50Pct = ((stock.price - stock.ma50) / stock.ma50) * 100;
+      const isNearSupport = distFrom50Pct >= -1.0 && distFrom50Pct <= maxProximityPct;
+
+      let status = 'NEUTRAL';
+      let statusLabel = 'Neutral';
+      let badgeClass = 'bg-slate-800 text-slate-400 border-slate-700';
+
+      if (isGoldenCross && isFresh && isNearSupport) {
+        status = 'EARLY_BULL';
+        statusLabel = '🟢 STAGE 2 BREAKOUT';
+        badgeClass = 'bg-emerald-950 text-emerald-400 border-emerald-800 font-bold';
+      } else if (isGoldenCross && stock.daysSinceCross > maxDays) {
+        status = 'EXTENDED';
+        statusLabel = '⚪ Extended Rally';
+        badgeClass = 'bg-cyan-950/70 text-cyan-400 border-cyan-800';
+      } else if (!isGoldenCross && Math.abs(distFrom50Pct) < 3.5) {
+        status = 'WATCHING';
+        statusLabel = '🟡 Stage 1 Base';
+        badgeClass = 'bg-amber-950/70 text-amber-300 border-amber-800';
+      }
+
+      return {
+        ...stock,
+        distFrom50Pct,
+        status,
+        statusLabel,
+        badgeClass
+      };
+    }
+
+    function renderScreenerTable() {
+      const maxDays = parseInt(filterDaysSlider.value, 10);
+      const maxProximity = parseFloat(filterProximitySlider.value);
+      const statusFilter = filterStatusSelect.value;
+      const sectorFilter = filterSectorSelect.value;
+
+      labelMaxDays.textContent = `${maxDays} days`;
+      labelMaxProximity.textContent = `≤ ${maxProximity.toFixed(1)}%`;
+
+      const evaluated = marketData.map(s => evaluateStock(s, maxDays, maxProximity));
+
+      const filtered = evaluated.filter(s => {
+        const matchStatus = (statusFilter === 'ALL') || (s.status === statusFilter);
+        const matchSector = (sectorFilter === 'ALL') || (s.sector === sectorFilter);
+        return matchStatus && matchSector;
+      });
+
+      const totalBull = evaluated.filter(s => s.status === 'EARLY_BULL').length;
+      statBullCount.textContent = totalBull;
+      filteredCountLabel.textContent = `(${filtered.length} stocks displayed)`;
+
+      tableBody.innerHTML = '';
+      if (filtered.length === 0) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="9" class="py-8 text-center text-slate-500 font-sans">
+              No breakout candidates matched your filters. Widen days slider or select another sector.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      filtered.forEach(s => {
+        const row = document.createElement('tr');
+        const flashClass = updatedTickerFlashes.has(s.ticker) ? (s.change >= 0 ? 'flash-up' : 'flash-down') : '';
+        row.className = `cursor-pointer transition-colors border-b border-slate-800/40 hover:bg-slate-800/40 text-slate-300 ${flashClass}`;
+
+        const etfTicker = s.etf || SECTOR_TO_ETF[s.sector] || 'SPY';
+
+        row.innerHTML = `
+          <td class="py-3 px-3">
+            <div class="flex items-center space-x-2">
+              <span class="font-bold text-white font-mono text-sm">${s.ticker}</span>
+              <span class="text-[10px] text-slate-400 font-mono font-normal">${s.volumeSurge || '1.5x Vol'}</span>
+            </div>
+            <div class="text-[11px] text-slate-400 truncate max-w-[130px] font-sans">${s.name}</div>
+          </td>
+          <td class="py-3 px-3">
+            <div class="text-xs text-slate-200 font-sans">${s.sector}</div>
+            <div class="text-[10px] font-mono text-emerald-400 font-semibold flex items-center gap-1">
+              <span>ETF: ${etfTicker}</span>
+            </div>
+          </td>
+          <td class="py-3 px-3 text-right font-mono">
+            <div class="text-slate-100 font-bold">$${s.price.toFixed(2)}</div>
+            <div class="text-[10px] ${s.change >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${s.change >= 0 ? '+' : ''}${s.change.toFixed(2)}%</div>
+          </td>
+          <td class="py-3 px-3 text-right font-mono text-cyan-400 hidden sm:table-cell">$${s.ma50.toFixed(2)}</td>
+          <td class="py-3 px-3 text-right font-mono text-amber-400 hidden md:table-cell">$${s.ma200.toFixed(2)}</td>
+          <td class="py-3 px-3 text-center font-mono">
+            <span class="${s.daysSinceCross > 0 && s.daysSinceCross <= maxDays ? 'text-emerald-400 font-bold' : 'text-slate-400'}">
+              ${s.daysSinceCross > 0 ? s.daysSinceCross + 'd' : 'None'}
+            </span>
+          </td>
+          <td class="py-3 px-3 text-right font-mono">
+            <span class="${s.distFrom50Pct >= 0 && s.distFrom50Pct <= maxProximity ? 'text-emerald-400 font-bold' : 'text-slate-400'}">
+              ${s.distFrom50Pct >= 0 ? '+' : ''}${s.distFrom50Pct.toFixed(1)}%
+            </span>
+          </td>
+          <td class="py-3 px-3 text-center">
+            <span class="text-[10px] px-2 py-0.5 rounded font-mono bg-slate-800 text-slate-300 border border-slate-700">
+              ${s.volumeSurge}
+            </span>
+          </td>
+          <td class="py-3 px-3 text-center">
+            <span class="text-[10px] px-2.5 py-0.5 rounded-full border font-sans inline-block whitespace-nowrap ${s.badgeClass}">
+              ${s.statusLabel}
+            </span>
+          </td>
+        `;
+
+        row.addEventListener('click', () => {
+          openChartModal(s);
+        });
+
+        tableBody.appendChild(row);
+      });
+    }
+
+    function openChartModal(stock) {
+      document.getElementById('modal-ticker').textContent = stock.ticker;
+      document.getElementById('modal-company-info').textContent = `${stock.name} • ${stock.sector} (${stock.etf || 'SPY'})`;
+      document.getElementById('modal-price').textContent = `$${stock.price.toFixed(2)}`;
+      
+      const changeEl = document.getElementById('modal-change');
+      changeEl.textContent = `${stock.change >= 0 ? '+' : ''}${stock.change.toFixed(2)}% Today`;
+      changeEl.className = `text-[11px] font-mono ${stock.change >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+
+      const badgeEl = document.getElementById('modal-badge');
+      badgeEl.textContent = stock.statusLabel.toUpperCase();
+      badgeEl.className = `text-xs px-2 py-0.5 rounded font-mono border ${stock.badgeClass}`;
+
+      document.getElementById('modal-ma50').textContent = `$${stock.ma50.toFixed(2)}`;
+      document.getElementById('modal-ma200').textContent = `$${stock.ma200.toFixed(2)}`;
+      document.getElementById('modal-days-cross').textContent = stock.daysSinceCross > 0 ? `${stock.daysSinceCross}d ago` : 'None';
+      document.getElementById('modal-dist-50').textContent = `${stock.distFrom50Pct >= 0 ? '+' : ''}${stock.distFrom50Pct.toFixed(1)}%`;
+
+      // Build checklist
+      const checklistEl = document.getElementById('modal-checklist');
+      checklistEl.innerHTML = `
+        <div class="flex items-center space-x-1.5 ${stock.daysSinceCross > 0 && stock.daysSinceCross <= 20 ? 'text-emerald-400' : 'text-slate-500'}">
+          <i data-lucide="${stock.daysSinceCross > 0 && stock.daysSinceCross <= 20 ? 'check-circle' : 'circle'}" class="w-3.5 h-3.5"></i>
+          <span>Fresh Cross (&le; 20d)</span>
+        </div>
+        <div class="flex items-center space-x-1.5 ${stock.distFrom50Pct <= 5.0 ? 'text-emerald-400' : 'text-slate-500'}">
+          <i data-lucide="${stock.distFrom50Pct <= 5.0 ? 'check-circle' : 'circle'}" class="w-3.5 h-3.5"></i>
+          <span>Near 50MA Launchpad</span>
+        </div>
+        <div class="flex items-center space-x-1.5 ${stock.volumeSurge !== 'Normal' ? 'text-emerald-400' : 'text-slate-500'}">
+          <i data-lucide="${stock.volumeSurge !== 'Normal' ? 'check-circle' : 'circle'}" class="w-3.5 h-3.5"></i>
+          <span>Institutional Surge</span>
+        </div>
+      `;
+
+      // Render technical chart with 60 periods
+      renderModalChart(stock);
+      modalChart.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function renderModalChart(stock) {
+      const ctx = document.getElementById('stockModalChart').getContext('2d');
+      if (modalChartInstance) modalChartInstance.destroy();
+
+      const days = 45;
+      const labels = [];
+      const prices = [];
+      const ma50 = [];
+      const ma200 = [];
+
+      let simPrice = stock.price * 0.90;
+      for (let i = days; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        labels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+
+        const step = (stock.price - simPrice) / (i + 1);
+        simPrice += step + (Math.random() - 0.48) * (stock.price * 0.015);
+        prices.push(parseFloat(simPrice.toFixed(2)));
+
+        ma50.push(parseFloat((stock.ma50 * (1 - (i / days) * 0.06)).toFixed(2)));
+        ma200.push(parseFloat((stock.ma200 * (1 - (i / days) * 0.02)).toFixed(2)));
+      }
+
+      prices[prices.length - 1] = stock.price;
+      ma50[ma50.length - 1] = stock.ma50;
+      ma200[ma200.length - 1] = stock.ma200;
+
+      modalChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: `${stock.ticker} Price`,
+              data: prices,
+              borderColor: '#f8fafc',
+              borderWidth: 2,
+              pointRadius: 0,
+              tension: 0.15
+            },
+            {
+              label: '50-Day MA (Launchpad)',
+              data: ma50,
+              borderColor: '#06b6d4',
+              borderWidth: 1.5,
+              borderDash: [4, 4],
+              pointRadius: 0
+            },
+            {
+              label: '200-Day MA (Long Baseline)',
+              data: ma200,
+              borderColor: '#f59e0b',
+              borderWidth: 1.5,
+              pointRadius: 0
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: {
+              labels: { color: '#94a3b8', font: { size: 10 } }
+            },
+            tooltip: {
+              backgroundColor: '#0b111b',
+              borderColor: '#334155',
+              borderWidth: 1
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(51, 65, 85, 0.2)' },
+              ticks: { color: '#64748b', maxTicksLimit: 6, font: { size: 9 } }
+            },
+            y: {
+              grid: { color: 'rgba(51, 65, 85, 0.25)' },
+              ticks: { color: '#64748b', font: { size: 9 } }
+            }
+          }
+        }
+      });
+    }
+
+    function triggerLiveRefresh() {
+      refreshIcon.classList.add('animate-spin');
+      btnRefresh.disabled = true;
+
+      setTimeout(() => {
+        updatedTickerFlashes.clear();
+
+        // 1. Shift sector performance
+        SECTOR_ETFS.forEach(sec => {
+          const shift = (Math.random() - 0.47) * 0.4;
+          sec.perf3M = parseFloat((sec.perf3M + shift).toFixed(1));
+          sec.rsRating = Math.min(99, Math.max(15, Math.round(sec.rsRating + (Math.random() - 0.47) * 2)));
+
+          if (sec.rsRating >= 80) sec.phase = 'LEADING';
+          else if (sec.rsRating >= 68) sec.phase = 'IMPROVING';
+          else if (sec.rsRating >= 50) sec.phase = 'WEAKENING';
+          else sec.phase = 'LAGGING';
+        });
+
+        // Re-sort sectors
+        SECTOR_ETFS.sort((a, b) => b.perf3M - a.perf3M);
+
+        // 2. Shift stock prices
+        marketData = marketData.map(s => {
+          const tickPct = (Math.random() - 0.48) * 0.018;
+          const newPrice = parseFloat((s.price * (1 + tickPct)).toFixed(2));
+          updatedTickerFlashes.add(s.ticker);
+
+          return {
+            ...s,
+            price: newPrice,
+            change: parseFloat((tickPct * 100).toFixed(2)),
+            ma50: parseFloat((s.ma50 * (1 + tickPct * 0.15)).toFixed(2))
+          };
+        });
+
+        localStorage.setItem('bull_scanner_stocks_v2', JSON.stringify(marketData));
+
+        // Update timestamp
+        updateTimestamp();
+
+        // Re-render
+        renderLeadingEtfs();
+        renderAllSectors();
+        renderScreenerTable();
+
+        refreshIcon.classList.remove('animate-spin');
+        btnRefresh.disabled = false;
+        lucide.createIcons();
+
+        // Remove flashes after animation finishes
+        setTimeout(() => {
+          updatedTickerFlashes.clear();
+        }, 1500);
+
+      }, 600);
+    }
+
+    function updateTimestamp() {
+      const now = new Date();
+      lastUpdatedTimeEl.textContent = now.toLocaleTimeString();
+    }
+
+    function copyToClipboard(text, triggerEl) {
+      if (document.execCommand) {
+        const input = document.createElement('input');
+        input.value = text;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+      }
+      const originalText = triggerEl.textContent;
+      triggerEl.textContent = 'Copied!';
+      triggerEl.classList.add('text-emerald-400');
+      setTimeout(() => {
+        triggerEl.textContent = originalText;
+        triggerEl.classList.remove('text-emerald-400');
+      }, 1200);
+    }
+
+    filterDaysSlider.addEventListener('input', renderScreenerTable);
+    filterProximitySlider.addEventListener('input', renderScreenerTable);
+    filterStatusSelect.addEventListener('change', renderScreenerTable);
+    filterSectorSelect.addEventListener('change', handleSectorChange);
+
+    btnRefresh.addEventListener('click', triggerLiveRefresh);
+
+    btnAddTicker.addEventListener('click', () => {
+      const ticker = inputNewTicker.value.trim().toUpperCase();
+      if (!ticker) return;
+
+      if (marketData.some(s => s.ticker === ticker)) {
+        inputNewTicker.value = '';
+        return;
+      }
+
+      const randomPrice = parseFloat((Math.random() * 220 + 30).toFixed(2));
+      const crossDays = Math.floor(Math.random() * 18) + 3;
+      const assignedSector = filterSectorSelect.value !== 'ALL' ? filterSectorSelect.value : 'Technology';
+
+      const newStock = {
+        ticker: ticker,
+        name: `${ticker} Corporation`,
+        sector: assignedSector,
+        etf: SECTOR_TO_ETF[assignedSector] || 'SPY',
+        price: randomPrice,
+        change: parseFloat(((Math.random() * 3) - 0.5).toFixed(2)),
+        ma50: parseFloat((randomPrice * 0.97).toFixed(2)),
+        ma200: parseFloat((randomPrice * 0.94).toFixed(2)),
+        daysSinceCross: crossDays,
+        volumeSurge: '2.0x Vol'
+      };
+
+      marketData.unshift(newStock);
+      localStorage.setItem('bull_scanner_stocks_v2', JSON.stringify(marketData));
+      inputNewTicker.value = '';
+      renderScreenerTable();
+      lucide.createIcons();
+    });
+
+    inputNewTicker.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') btnAddTicker.click();
+    });
+
+    btnExportCSV.addEventListener('click', () => {
+      const maxDays = parseInt(filterDaysSlider.value, 10);
+      const maxProximity = parseFloat(filterProximitySlider.value);
+      const evaluated = marketData.map(s => evaluateStock(s, maxDays, maxProximity));
+
+      let csv = 'Ticker,Name,Sector,Benchmark_ETF,Price,50_MA,200_MA,Days_Since_Cross,Dist_50MA_Pct,Status\n';
+      evaluated.forEach(s => {
+        csv += `${s.ticker},"${s.name}",${s.sector},${s.etf || 'SPY'},${s.price},${s.ma50},${s.ma200},${s.daysSinceCross},${s.distFrom50Pct.toFixed(2)},${s.status}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('hidden', '');
+      a.setAttribute('href', url);
+      a.setAttribute('download', `early_bull_screener_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    });
+
+    // Modal controls
+    btnCloseChart.addEventListener('click', () => modalChart.classList.add('hidden'));
+    window.addEventListener('click', (e) => {
+      if (e.target === modalChart) modalChart.classList.add('hidden');
+      if (e.target === modalDeploy) modalDeploy.classList.add('hidden');
+    });
+
+    btnDeployGuide.addEventListener('click', () => modalDeploy.classList.remove('hidden'));
+    btnCloseDeploy.addEventListener('click', () => modalDeploy.classList.add('hidden'));
+    btnCloseDeploy2.addEventListener('click', () => modalDeploy.classList.add('hidden'));
+
+    // Initialize application on load
+    window.onload = () => {
+      updateTimestamp();
+      renderLeadingEtfs();
+      renderAllSectors();
+      renderScreenerTable();
+      lucide.createIcons();
+    };
+  </script>
+</body>
+</html>
