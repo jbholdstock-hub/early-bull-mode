@@ -1,27 +1,27 @@
 {
-  "last_updated": "2026-10-04 23:04 UTC",
+  "last_updated": "2026-10-11 23:03 UTC",
   "leading_etfs": [
     {
       "ticker": "XLE",
       "name": "Energy",
-      "price": 62.82,
-      "return_3m": 14.73,
+      "price": 65.08,
+      "return_3m": 13.5,
       "status": "leading",
       "rank": 1
     },
     {
       "ticker": "XLK",
       "name": "Technology",
-      "price": 199.81,
-      "return_3m": 7.68,
+      "price": 198.78,
+      "return_3m": 13.34,
       "status": "leading",
       "rank": 2
     },
     {
       "ticker": "XLV",
       "name": "Healthcare",
-      "price": 166.18,
-      "return_3m": 3.72,
+      "price": 170.81,
+      "return_3m": 6.44,
       "status": "leading",
       "rank": 3
     }
@@ -30,24 +30,24 @@
     {
       "ticker": "XLC",
       "name": "Communication Services",
-      "price": 110.32,
-      "return_3m": -0.86,
+      "price": 110.38,
+      "return_3m": 0.08,
       "status": "improving",
       "rank": 4
     },
     {
-      "ticker": "XLB",
-      "name": "Materials",
-      "price": 48.86,
-      "return_3m": -3.55,
+      "ticker": "XLP",
+      "name": "Consumer Staples",
+      "price": 83.43,
+      "return_3m": -1.42,
       "status": "improving",
       "rank": 5
     },
     {
-      "ticker": "XLP",
-      "name": "Consumer Staples",
-      "price": 80.53,
-      "return_3m": -3.64,
+      "ticker": "XLB",
+      "name": "Materials",
+      "price": 49.43,
+      "return_3m": -1.73,
       "status": "improving",
       "rank": 6
     }
@@ -56,88 +56,88 @@
     {
       "ticker": "XLE",
       "name": "Energy",
-      "price": 62.82,
-      "return_3m": 14.73,
+      "price": 65.08,
+      "return_3m": 13.5,
       "status": "leading",
       "rank": 1
     },
     {
       "ticker": "XLK",
       "name": "Technology",
-      "price": 199.81,
-      "return_3m": 7.68,
+      "price": 198.78,
+      "return_3m": 13.34,
       "status": "leading",
       "rank": 2
     },
     {
       "ticker": "XLV",
       "name": "Healthcare",
-      "price": 166.18,
-      "return_3m": 3.72,
+      "price": 170.81,
+      "return_3m": 6.44,
       "status": "leading",
       "rank": 3
     },
     {
       "ticker": "XLC",
       "name": "Communication Services",
-      "price": 110.32,
-      "return_3m": -0.86,
+      "price": 110.38,
+      "return_3m": 0.08,
       "status": "improving",
       "rank": 4
     },
     {
-      "ticker": "XLB",
-      "name": "Materials",
-      "price": 48.86,
-      "return_3m": -3.55,
+      "ticker": "XLP",
+      "name": "Consumer Staples",
+      "price": 83.43,
+      "return_3m": -1.42,
       "status": "improving",
       "rank": 5
     },
     {
-      "ticker": "XLP",
-      "name": "Consumer Staples",
-      "price": 80.53,
-      "return_3m": -3.64,
+      "ticker": "XLB",
+      "name": "Materials",
+      "price": 49.43,
+      "return_3m": -1.73,
       "status": "improving",
       "rank": 6
     },
     {
-      "ticker": "XLF",
-      "name": "Financials",
-      "price": 53.49,
-      "return_3m": -3.65,
+      "ticker": "XLY",
+      "name": "Consumer Discretionary",
+      "price": 112.85,
+      "return_3m": -2.03,
       "status": "weakening",
       "rank": 7
     },
     {
-      "ticker": "XLY",
-      "name": "Consumer Discretionary",
-      "price": 110.04,
-      "return_3m": -5.93,
+      "ticker": "XLF",
+      "name": "Financials",
+      "price": 54.73,
+      "return_3m": -2.38,
       "status": "weakening",
       "rank": 8
     },
     {
       "ticker": "XLI",
       "name": "Industrials",
-      "price": 169.95,
-      "return_3m": -6.33,
+      "price": 169.25,
+      "return_3m": -5.41,
       "status": "weakening",
       "rank": 9
     },
     {
       "ticker": "XLRE",
       "name": "Real Estate",
-      "price": 40.81,
-      "return_3m": -7.42,
+      "price": 41.61,
+      "return_3m": -7.62,
       "status": "lagging",
       "rank": 10
     },
     {
       "ticker": "XLU",
       "name": "Utilities",
-      "price": 39.83,
-      "return_3m": -11.64,
+      "price": 41.41,
+      "return_3m": -7.65,
       "status": "lagging",
       "rank": 11
     }
