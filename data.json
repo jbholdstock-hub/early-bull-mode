@@ -1,53 +1,53 @@
 {
-  "last_updated": "2026-10-18 23:08 UTC",
+  "last_updated": "2026-10-25 23:10 UTC",
   "leading_etfs": [
     {
       "ticker": "XLE",
       "name": "Energy",
-      "price": 68.24,
-      "return_3m": 15.14,
+      "price": 69.33,
+      "return_3m": 17.12,
       "status": "leading",
       "rank": 1
     },
     {
       "ticker": "XLV",
       "name": "Healthcare",
-      "price": 176.71,
-      "return_3m": 9.11,
+      "price": 179.28,
+      "return_3m": 10.71,
       "status": "leading",
       "rank": 2
     },
     {
-      "ticker": "XLP",
-      "name": "Consumer Staples",
-      "price": 87.62,
-      "return_3m": 4.83,
+      "ticker": "XLK",
+      "name": "Technology",
+      "price": 183.23,
+      "return_3m": 4.62,
       "status": "leading",
       "rank": 3
     }
   ],
   "improving_etfs": [
     {
-      "ticker": "XLK",
-      "name": "Technology",
-      "price": 183.47,
-      "return_3m": 4.44,
+      "ticker": "XLP",
+      "name": "Consumer Staples",
+      "price": 88.26,
+      "return_3m": 4.46,
       "status": "improving",
       "rank": 4
     },
     {
-      "ticker": "XLC",
-      "name": "Communication Services",
-      "price": 110.32,
-      "return_3m": 4.12,
+      "ticker": "XLB",
+      "name": "Materials",
+      "price": 51.31,
+      "return_3m": 2.21,
       "status": "improving",
       "rank": 5
     },
     {
-      "ticker": "XLY",
-      "name": "Consumer Discretionary",
-      "price": 112.46,
-      "return_3m": 3.01,
+      "ticker": "XLF",
+      "name": "Financials",
+      "price": 55.9,
+      "return_3m": -1.48,
       "status": "improving",
       "rank": 6
     }
@@ -56,88 +56,88 @@
     {
       "ticker": "XLE",
       "name": "Energy",
-      "price": 68.24,
-      "return_3m": 15.14,
+      "price": 69.33,
+      "return_3m": 17.12,
       "status": "leading",
       "rank": 1
     },
     {
       "ticker": "XLV",
       "name": "Healthcare",
-      "price": 176.71,
-      "return_3m": 9.11,
+      "price": 179.28,
+      "return_3m": 10.71,
       "status": "leading",
       "rank": 2
     },
     {
-      "ticker": "XLP",
-      "name": "Consumer Staples",
-      "price": 87.62,
-      "return_3m": 4.83,
+      "ticker": "XLK",
+      "name": "Technology",
+      "price": 183.23,
+      "return_3m": 4.62,
       "status": "leading",
       "rank": 3
     },
     {
-      "ticker": "XLK",
-      "name": "Technology",
-      "price": 183.47,
-      "return_3m": 4.44,
+      "ticker": "XLP",
+      "name": "Consumer Staples",
+      "price": 88.26,
+      "return_3m": 4.46,
       "status": "improving",
       "rank": 4
     },
     {
-      "ticker": "XLC",
-      "name": "Communication Services",
-      "price": 110.32,
-      "return_3m": 4.12,
+      "ticker": "XLB",
+      "name": "Materials",
+      "price": 51.31,
+      "return_3m": 2.21,
       "status": "improving",
       "rank": 5
     },
     {
-      "ticker": "XLY",
-      "name": "Consumer Discretionary",
-      "price": 112.46,
-      "return_3m": 3.01,
+      "ticker": "XLF",
+      "name": "Financials",
+      "price": 55.9,
+      "return_3m": -1.48,
       "status": "improving",
       "rank": 6
     },
     {
-      "ticker": "XLB",
-      "name": "Materials",
-      "price": 50.92,
-      "return_3m": -0.21,
+      "ticker": "XLC",
+      "name": "Communication Services",
+      "price": 105.51,
+      "return_3m": -2.2,
       "status": "weakening",
       "rank": 7
     },
     {
-      "ticker": "XLF",
-      "name": "Financials",
-      "price": 55.52,
-      "return_3m": -1.05,
+      "ticker": "XLY",
+      "name": "Consumer Discretionary",
+      "price": 113.1,
+      "return_3m": -2.36,
       "status": "weakening",
       "rank": 8
     },
     {
-      "ticker": "XLRE",
-      "name": "Real Estate",
-      "price": 42.16,
-      "return_3m": -7.48,
+      "ticker": "XLU",
+      "name": "Utilities",
+      "price": 42.56,
+      "return_3m": -3.33,
       "status": "weakening",
       "rank": 9
     },
     {
-      "ticker": "XLI",
-      "name": "Industrials",
-      "price": 167.76,
-      "return_3m": -7.91,
+      "ticker": "XLRE",
+      "name": "Real Estate",
+      "price": 42.57,
+      "return_3m": -4.75,
       "status": "lagging",
       "rank": 10
     },
     {
-      "ticker": "XLU",
-      "name": "Utilities",
-      "price": 42.21,
-      "return_3m": -8.14,
+      "ticker": "XLI",
+      "name": "Industrials",
+      "price": 164.62,
+      "return_3m": -8.22,
       "status": "lagging",
       "rank": 11
     }
